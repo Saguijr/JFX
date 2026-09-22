@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JFX Prospect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">JFX</span>
+      <div class="brand-text">
+        <h1>Prospect</h1>
+        <p>Prospecção comercial · JFX Digital</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="sync-pill" id="syncStatus" title="Status da sincronização com o Google Sheets">
+        <span class="sync-dot"></span>
+        <span class="sync-label">Conectando…</span>
+      </button>
+      <button class="btn-icon" id="btnConfig" title="Configurar conexão com o Google Sheets" aria-label="Configurações">⚙</button>
+      <button class="btn-primary" id="btnNovoLead">+ Novo lead</button>
+    </div>
+  </header>
+
+  <section class="stats-grid" id="statsGrid">
+    <button class="stat-card" data-filter="prioritarios">
+      <span class="stat-icon">🔥</span>
+      <span class="stat-value" id="statPrioritarios">0</span>
+      <span class="stat-label">Prioritários</span>
+    </button>
+    <button class="stat-card" data-filter="ligar-hoje">
+      <span class="stat-icon">📞</span>
+      <span class="stat-value" id="statLigarHoje">0</span>
+      <span class="stat-label">Ligar hoje</span>
+    </button>
+    <button class="stat-card" data-filter="whatsapp">
+      <span class="stat-icon">💬</span>
+      <span class="stat-value" id="statWhatsapp">0</span>
+      <span class="stat-label">WhatsApp</span>
+    </button>
+    <button class="stat-card" data-filter="follow-up">
+      <span class="stat-icon">⏳</span>
+      <span class="stat-value" id="statFollowUp">0</span>
+      <span class="stat-label">Follow-up</span>
+    </button>
+    <button class="stat-card" data-filter="convertido">
+      <span class="stat-icon">✅</span>
+      <span class="stat-value" id="statConvertidos">0</span>
+      <span class="stat-label">Convertidos</span>
+    </button>
+    <button class="stat-card" data-filter="descartado">
+      <span class="stat-icon">❌</span>
+      <span class="stat-value" id="statDescartados">0</span>
+      <span class="stat-label">Descartados</span>
+    </button>
+    <button class="stat-card stat-card-pipeline" data-filter="pipeline">
+      <span class="stat-icon">💰</span>
+      <span class="stat-value" id="statPipeline">R$ 0</span>
+      <span class="stat-label">Pipeline ativo</span>
+    </button>
+  </section>
+
+  <section class="toolbar">
+    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por empresa, cidade ou responsável…">
+    <select id="filterStatus" class="select-filter">
+      <option value="">Todos os status</option>
+      <option value="novo">Novo</option>
+      <option value="contato_feito">Contato feito</option>
+      <option value="negociando">Negociando</option>
+      <option value="follow_up">Follow-up agendado</option>
+      <option value="convertido">Convertido</option>
+      <option value="descartado">Descartado</option>
+    </select>
+    <select id="filterTemperatura" class="select-filter">
+      <option value="">Toda temperatura</option>
+      <option value="quente">🔥 Quente</option>
+      <option value="morno">🟡 Morno</option>
+      <option value="frio">🧊 Frio</option>
+    </select>
+    <select id="filterSegmento" class="select-filter">
+      <option value="">Todo segmento</option>
+    </select>
+    <select id="sortBy" class="select-filter">
+      <option value="score">Ordenar: Score JFX</option>
+      <option value="valor">Ordenar: Valor estimado</option>
+      <option value="recente">Ordenar: Contato recente</option>
+      <option value="nome">Ordenar: Nome</option>
+    </select>
+    <button class="btn-ghost" id="btnLimparFiltros">Limpar filtros</button>
+  </section>
+
+  <section class="leads-list" id="leadsList"></section>
+
+  <p class="empty-state" id="emptyState" hidden>
+    Nenhum lead por aqui ainda. Cadastre o primeiro lead para começar a priorizar sua prospecção.
+  </p>
+
+</div>
+
+<!-- Modal: cadastro / edição de lead -->
+<div class="modal-overlay" id="modalLead" hidden>
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="modalLeadTitle">Novo lead</h2>
+      <button class="btn-close" data-close="modalLead" aria-label="Fechar">✕</button>
+    </div>
+    <form id="leadForm">
+      <input type="hidden" name="id" id="leadId">
+
+      <div class="form-section">
+        <h3>Empresa</h3>
+        <div class="form-grid">
+          <label class="field">Empresa*
+            <input type="text" name="empresa" required>
+          </label>
+          <label class="field">Ramo / segmento
+            <input type="text" name="segmento" placeholder="Ex: Restaurante, Barbearia, Clínica…">
+          </label>
+          <label class="field">Responsável
+            <input type="text" name="responsavel">
+          </label>
+          <label class="field">Cidade
+            <input type="text" name="cidade">
+          </label>
+          <label class="field field-wide">Endereço
+            <input type="text" name="endereco">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Contato</h3>
+        <div class="form-grid">
+          <label class="field">Telefone
+            <input type="tel" name="telefone" placeholder="(19) 99999-9999">
+          </label>
+          <label class="field">WhatsApp
+            <input type="tel" name="whatsapp" placeholder="(19) 99999-9999">
+          </label>
+          <label class="field">E-mail
+            <input type="email" name="email">
+          </label>
+          <label class="field">Instagram
+            <input type="text" name="instagram" placeholder="@perfil">
+          </label>
+          <label class="field field-check">
+            <input type="checkbox" name="instagramAtivo">
+            Instagram ativo (posts recentes)
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Presença digital</h3>
+        <div class="form-grid">
+          <label class="field">Site
+            <input type="text" name="site" placeholder="https://…">
+          </label>
+          <label class="field field-check">
+            <input type="checkbox" name="temSite" id="temSiteCheck">
+            Possui site
+          </label>
+          <label class="field">Qualidade do site
+            <select name="qualidadeSite">
+              <option value="nao_se_aplica">Não se aplica</option>
+              <option value="ruim">Ruim / desatualizado</option>
+              <option value="regular">Regular</option>
+              <option value="boa">Boa</option>
+            </select>
+          </label>
+          <label class="field field-check">
+            <input type="checkbox" name="precisaManutencao">
+            Site precisa de manutenção
+          </label>
+          <label class="field">Avaliações no Google</label>
+          <div class="field-pair">
+            <label class="field">Nº de avaliações
+              <input type="number" name="gmbAvaliacoes" min="0" step="1" value="0">
+            </label>
+            <label class="field">Nota (0–5)
+              <input type="number" name="gmbNota" min="0" max="5" step="0.1" value="0">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Funil</h3>
+        <div class="form-grid">
+          <label class="field">Status
+            <select name="status">
+              <option value="novo">Novo</option>
+              <option value="contato_feito">Contato feito</option>
+              <option value="negociando">Negociando</option>
+              <option value="follow_up">Follow-up agendado</option>
+              <option value="convertido">Convertido</option>
+              <option value="descartado">Descartado</option>
+            </select>
+          </label>
+          <label class="field">Potencial de venda
+            <select name="potencialVenda">
+              <option value="baixo">Baixo</option>
+              <option value="medio" selected>Médio</option>
+              <option value="alto">Alto</option>
+            </select>
+          </label>
+          <label class="field">Valor estimado (R$)
+            <input type="number" name="valorEstimado" min="0" step="50">
+          </label>
+          <label class="field">Data do primeiro contato
+            <input type="date" name="dataPrimeiroContato">
+          </label>
+          <label class="field">Último contato
+            <input type="date" name="ultimoContato">
+          </label>
+          <label class="field">Próximo follow-up
+            <input type="date" name="proximoFollowup">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Observações</h3>
+        <label class="field field-wide">
+          <textarea name="observacoes" rows="3" placeholder="Anotações sobre o lead, a conversa, objeções…"></textarea>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" data-close="modalLead">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar lead</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: detalhes do lead -->
+<div class="modal-overlay" id="modalDetalhes" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detalhesTitulo">Lead</h2>
+      <button class="btn-close" data-close="modalDetalhes" aria-label="Fechar">✕</button>
+    </div>
+    <div id="detalhesConteudo" class="detalhes-conteudo"></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="btnDescartarLead">Descartar</button>
+      <button class="btn-ghost" id="btnExcluirLead">Excluir</button>
+      <button class="btn-secondary" id="btnEditarLead">Editar</button>
+      <button class="btn-primary" id="btnConverterLead">Marcar como convertido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: configuração da conexão com Google Sheets -->
+<div class="modal-overlay" id="modalConfig" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Conexão com Google Sheets</h2>
+      <button class="btn-close" data-close="modalConfig" aria-label="Fechar">✕</button>
+    </div>
+    <div class="config-body">
+      <p>Cole aqui a URL do seu Web App do Google Apps Script (veja o passo a passo em <strong>LEIA-ME.md</strong>).</p>
+      <label class="field field-wide">URL do Web App
+        <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+      </label>
+      <p class="config-hint" id="configHint"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" data-close="modalConfig">Fechar</button>
+      <button class="btn-primary" id="btnSalvarConfig">Salvar e sincronizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
